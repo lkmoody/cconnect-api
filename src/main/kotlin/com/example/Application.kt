@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.database.configureDatabase
 import io.ktor.server.application.*
 import com.example.plugins.*
 
@@ -9,6 +10,7 @@ fun main(args: Array<String>): Unit =
 @Suppress("unused") // application.conf references the main function. This annotation prevents the IDE from marking it as unused.
 fun Application.module() {
     configureSecurity()
+    configureDatabase()
     configureRouting()
     configureSerialization()
 }

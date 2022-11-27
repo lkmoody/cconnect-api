@@ -1,5 +1,6 @@
 package com.example.routes
 
+import com.example.database.dao
 import com.example.models.Bill
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -10,8 +11,9 @@ import java.time.LocalDateTime
 fun Route.billRouting() {
     route("/bill") {
         get {
-            val bill = Bill("18175d44-a2f6-4bf9-839a-833a2606c1ac", "Bill 123", "This is a test", false, LocalDateTime.now(), LocalDateTime.now())
-            call.respond(HttpStatusCode.OK, bill)
+            val response = application.dao.getBills()
+
+            call.respond(HttpStatusCode.OK, response)
         }
         get("{id?}") {
 
