@@ -7,9 +7,26 @@ import io.ktor.server.auth.jwt.*
 import java.util.concurrent.TimeUnit
 
 fun Application.configureSecurity() {
-    authentication {
+    install(Authentication) {
         jwt {
+            val issuer = this@configureSecurity.environment.config.property("jwt.issuer").getString()
+            val audiences = this@configureSecurity.environment.config.property("jwt.audiences").getList()
+            val jwkProvider = JwkProviderBuilder(issuer)
+                .cached(10, 24, TimeUnit.HOURS)
+                .rateLimited(10, 1, TimeUnit.MINUTES)
+                .build()
 
+            verifier(jwkProvider, issuer) {
+                acceptLeeway(3)
+            }
+
+            validate { credential ->
+                if (credential.payload.getClaim("client_id").asString() in audiences && credential.payload.getClaim("token_use").asString() == "access") {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
         }
     }
 }
