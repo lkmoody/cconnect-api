@@ -17,5 +17,6 @@ fun Application.configureCORS() {
         val scheme = listOf(clientURI.scheme)
 
         allowHost(host, scheme)
+        println(host)
     }
 }
