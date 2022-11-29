@@ -41,6 +41,11 @@ dependencies {
 
     implementation("org.postgresql:postgresql:$postgresql_version")
 
+    implementation("io.ktor:ktor-server-cors:$ktor_version")
+
+    implementation("io.ktor:ktor-server-status-pages:$ktor_version")
+    implementation("io.ktor:ktor-server-cors-jvm:2.1.3")
+
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 }
