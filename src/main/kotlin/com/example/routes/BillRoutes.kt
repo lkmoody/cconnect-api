@@ -15,13 +15,13 @@ fun Route.billRouting() {
 
             call.respond(HttpStatusCode.OK, response)
         }
-        get("{id?}") {
+        get("/{id?}") {
 
         }
         post {
 
         }
-        delete("{id?}") {
+        delete("/{id?}") {
 
         }
     }
