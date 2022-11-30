@@ -17,10 +17,15 @@ fun Application.configureRouting() {
         get("/health") {
             call.respond(HttpStatusCode.OK)
         }
-        authenticate {
-            customerRouting()
-            voteRouting()
-            billRouting()
+        route("/api/v1") {
+            get("/health") {
+                call.respond(HttpStatusCode.OK)
+            }
+            authenticate {
+                customerRouting()
+                voteRouting()
+                billRouting()
+            }
         }
     }
 

@@ -7,6 +7,8 @@ import io.ktor.server.plugins.cors.routing.*
 fun Application.configureCORS() {
     install(CORS) {
         allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
 
@@ -17,6 +19,5 @@ fun Application.configureCORS() {
         val scheme = listOf(clientURI.scheme)
 
         allowHost(host, scheme)
-        println(host)
     }
 }
