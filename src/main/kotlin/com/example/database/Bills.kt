@@ -10,11 +10,11 @@ import org.jetbrains.exposed.sql.javatime.timestamp
 class BillEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<BillEntity>(Bills)
 
-    val name by Bills.name
-    val description by Bills.description
-    val voteClosed by Bills.voteClosed
-    val created by Bills.created
-    val updated by Bills.updated
+    var name by Bills.name
+    var description by Bills.description
+    var voteClosed by Bills.voteClosed
+    var created by Bills.created
+    var updated by Bills.updated
 }
 
 

@@ -1,32 +1,111 @@
 package com.example.routes
 
-import com.example.database.dao
-import com.example.models.Bill
+import com.example.database.BillEntity
+import com.example.database.billToApi
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import java.time.LocalDateTime
+import kotlinx.serialization.Serializable
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.Instant
+import javax.naming.ServiceUnavailableException
 
 fun Route.billRouting() {
     route("/bill") {
-        get {
-            val response = application.dao.getBills()
+        getBills()
+        createBill()
+    }
 
-            call.respond(HttpStatusCode.OK, response)
-        }
-        get("/{id?}") {
+    route("/bill/{id}") {
+        getBillById()
+        deleteBill()
+    }
+}
 
-        }
-        post {
-
-        }
-        delete("/{id?}") {
-
+fun Route.getBills() {
+    get {
+        try {
+            val bills = transaction {
+                BillEntity.all().map { it ->
+                    billToApi(it)
+                }
+            }
+            call.respond(HttpStatusCode.OK, bills)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            //TODO: Need to implement logging
+            throw ServiceUnavailableException()
         }
     }
 }
 
-private fun Route.getVotes(): HttpStatusCode {
-    return HttpStatusCode(200, "Success")
+fun Route.getBillById() {
+    get {
+        try {
+            val id = call.parameters["id"]?.toInt() ?: 0
+            val billEntity = transaction {
+                BillEntity.findById(id) ?: throw NotFoundException()
+            }
+
+            val bill = billToApi(billEntity)
+            call.respond(HttpStatusCode.OK, bill)
+        } catch (e: NotFoundException) {
+            call.respond(HttpStatusCode.NotFound)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw ServiceUnavailableException()
+        }
+    }
 }
+
+fun Route.createBill() {
+    post {
+        try {
+            val createBillRequest = call.receive<CreateBillRequest>()
+
+            val billEntity = transaction {
+                BillEntity.new {
+                    name = createBillRequest.name
+                    description = createBillRequest.description
+                    voteClosed = createBillRequest.voteClosed
+                    created = Instant.now()
+                    updated = Instant.now()
+                }
+            }
+
+            call.respond(HttpStatusCode.Created, billToApi(billEntity))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw ServiceUnavailableException()
+        }
+    }
+}
+
+fun Route.deleteBill() {
+    delete {
+        try {
+            val id = call.parameters["id"]?.toInt() ?: 0
+            transaction {
+                val billEntity = BillEntity.findById(id) ?: throw NotFoundException()
+                billEntity.delete()
+            }
+
+            call.respond(HttpStatusCode.OK, "Deleted")
+        } catch (e: NotFoundException) {
+            call.respond(HttpStatusCode.NotFound)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw ServiceUnavailableException()
+        }
+    }
+}
+
+@Serializable
+data class CreateBillRequest(
+    val name: String,
+    val description: String,
+    val voteClosed: Boolean
+)
