@@ -5,6 +5,7 @@ import com.example.routes.voteDetailRouting
 import com.example.routes.voteRouting
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -17,11 +18,11 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.OK)
             }
 
-            //authenticate {
-            billRouting()
-            voteRouting()
-            voteDetailRouting()
-            //}
+            authenticate {
+                billRouting()
+                voteRouting()
+                voteDetailRouting()
+            }
         }
     }
 
