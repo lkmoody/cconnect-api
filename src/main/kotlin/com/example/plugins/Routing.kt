@@ -18,6 +18,7 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.OK)
             }
 
+            // Authenticated Routes
             authenticate {
                 billRouting()
                 voteRouting()
