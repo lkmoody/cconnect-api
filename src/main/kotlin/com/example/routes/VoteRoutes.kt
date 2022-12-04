@@ -110,8 +110,7 @@ private fun Route.getVotes() {
             call.respond(HttpStatusCode.OK, response)
         } catch (e: Exception) {
             e.printStackTrace()
-            //throw ServiceUnavailableException()
-            throw e
+            throw ServiceUnavailableException()
         }
     }
 }
