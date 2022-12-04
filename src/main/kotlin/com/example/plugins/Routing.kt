@@ -14,6 +14,7 @@ fun Application.configureRouting() {
 
     routing {
         route("/api/v1") {
+            // Health check end point
             get("/health") {
                 call.respond(HttpStatusCode.OK)
             }
