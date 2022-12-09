@@ -1,7 +1,7 @@
-package com.example.routes
+package com.constituentconnect.routes
 
-import com.example.database.BillEntity
-import com.example.database.billToApi
+import com.constituentconnect.database.BillEntity
+import com.constituentconnect.database.billToApi
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*

@@ -1,6 +1,6 @@
-package com.example.database
+package com.constituentconnect.database
 
-import com.example.models.Vote
+import com.constituentconnect.models.Vote
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID

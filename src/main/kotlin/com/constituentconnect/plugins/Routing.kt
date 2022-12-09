@@ -1,8 +1,8 @@
-package com.example.plugins
+package com.constituentconnect.plugins
 
-import com.example.routes.billRouting
-import com.example.routes.voteDetailRouting
-import com.example.routes.voteRouting
+import com.constituentconnect.routes.billRouting
+import com.constituentconnect.routes.voteDetailRouting
+import com.constituentconnect.routes.voteRouting
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -20,11 +20,11 @@ fun Application.configureRouting() {
             }
 
             // Authenticated Routes
-            authenticate {
+            //authenticate {
                 billRouting()
                 voteRouting()
                 voteDetailRouting()
-            }
+            //}
         }
     }
 

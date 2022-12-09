@@ -1,4 +1,4 @@
-package com.example.plugins
+package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.server.application.*

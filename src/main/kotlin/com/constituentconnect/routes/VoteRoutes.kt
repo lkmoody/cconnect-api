@@ -1,13 +1,13 @@
-package com.example.routes
+package com.constituentconnect.routes
 
-import com.example.database.Bills
-import com.example.database.Votes
-import com.example.database.Votes.billId
-import com.example.database.Votes.updated
-import com.example.database.Votes.userId
-import com.example.database.Votes.voteDetailId
-import com.example.models.VoteListResponse
-import com.example.models.VoteResponse
+import com.constituentconnect.database.Bills
+import com.constituentconnect.database.Votes
+import com.constituentconnect.database.Votes.billId
+import com.constituentconnect.database.Votes.updated
+import com.constituentconnect.database.Votes.userId
+import com.constituentconnect.database.Votes.voteDetailId
+import com.constituentconnect.models.VoteListResponse
+import com.constituentconnect.models.VoteResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -22,16 +22,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import javax.naming.ServiceUnavailableException
 
 fun Route.voteRouting() {
-    route("/vote/{userId}/{page}") {
+    route("/vote/{userId}") {
         getVotes()
-    }
-
-    route("/vote/{userId}/{page}/{statusFilter}") {
-        getVotes()
-    }
-
-    route("/vote/{id}") {
-
     }
 }
 
@@ -39,8 +31,8 @@ private fun Route.getVotes() {
     get {
         try {
             val userIdFilter = call.parameters["userId"] ?: ""
-            val pageNumberFilter = call.parameters["page"]?.toInt() ?: 1
-            val statusFilter = call.parameters["statusFilter"]
+            val pageNumberFilter = call.request.queryParameters["page"]?.toInt() ?: 1
+            val statusFilter = call.request.queryParameters["status"]
             val pageCount = 50
             val skip = ((pageNumberFilter - 1) * pageCount).toLong()
 

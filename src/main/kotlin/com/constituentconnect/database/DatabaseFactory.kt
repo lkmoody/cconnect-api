@@ -1,4 +1,4 @@
-package com.example.database
+package com.constituentconnect.database
 
 import io.ktor.server.application.*
 import io.ktor.server.config.*

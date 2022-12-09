@@ -1,8 +1,8 @@
-package com.example
+package com.constituentconnect
 
-import com.example.database.configureDatabase
+import com.constituentconnect.database.configureDatabase
 import io.ktor.server.application.*
-import com.example.plugins.*
+import com.constituentconnect.plugins.*
 
 fun main(args: Array<String>): Unit =
     io.ktor.server.netty.EngineMain.main(args)

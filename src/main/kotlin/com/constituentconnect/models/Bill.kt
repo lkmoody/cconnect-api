@@ -1,4 +1,4 @@
-package com.example.models
+package com.constituentconnect.models
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

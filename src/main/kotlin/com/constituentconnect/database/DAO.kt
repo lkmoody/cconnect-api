@@ -1,8 +1,8 @@
-package com.example.database
+package com.constituentconnect.database
 
-import com.example.database.DatabaseFactory.dbQuery
-import com.example.models.Bill
-import com.example.routes.CreateBillRequest
+import com.constituentconnect.database.DatabaseFactory.dbQuery
+import com.constituentconnect.models.Bill
+import com.constituentconnect.routes.CreateBillRequest
 import io.ktor.server.plugins.*
 import org.jetbrains.exposed.sql.transactions.transaction
 

@@ -1,8 +1,9 @@
-package com.example.routes
+package com.constituentconnect.routes
 
-import com.example.database.VoteDetailEntity
-import com.example.database.voteDetailToApi
-import com.example.models.CreateVoteDetailRequest
+import com.constituentconnect.database.VoteDetailEntity
+import com.constituentconnect.database.Votes
+import com.constituentconnect.database.voteDetailToApi
+import com.constituentconnect.models.CreateVoteDetailRequest
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
@@ -10,6 +11,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.Instant
 import javax.naming.ServiceUnavailableException
 
@@ -59,6 +61,11 @@ private fun Route.createVoteDetail() {
                 }
             }
 
+            transaction {
+                Votes.update({Votes.id eq voteDetail.voteId}) {
+                    it[voteDetailId] = voteDetail.id.toString().toInt()
+                }
+            }
 
             call.respond(HttpStatusCode.Created, voteDetailToApi(voteDetail))
         } catch (e: Exception) {
