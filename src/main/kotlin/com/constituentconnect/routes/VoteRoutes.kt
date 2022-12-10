@@ -10,20 +10,59 @@ import com.constituentconnect.models.VoteListResponse
 import com.constituentconnect.models.VoteResponse
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
-import org.jetbrains.exposed.sql.andWhere
-import org.jetbrains.exposed.sql.innerJoin
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import javax.naming.ServiceUnavailableException
 
 fun Route.voteRouting() {
     route("/vote/{userId}") {
         getVotes()
+    }
+
+    route("/vote/{userId}/{id}") {
+        getVote()
+    }
+}
+
+private fun Route.getVote() {
+    get {
+        try {
+            val userIdFilter = call.parameters["userId"] ?: ""
+            val voteId = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+
+            val vote = transaction {
+                Votes.innerJoin(Bills, { billId }, { Bills.id })
+                    .slice(Votes.id, billId, userId, voteDetailId.isNotNull(), Bills.name, Bills.description, updated)
+                    .select {
+                        (userId eq userIdFilter) and (Votes.id eq voteId)
+                    }
+                    .limit(1)
+                    .single()
+                    .let {
+                        VoteResponse(
+                            it[Votes.id].toString().toInt(),
+                            it[billId],
+                            it[userId],
+                            it[voteDetailId.isNotNull()],
+                            it[Bills.name],
+                            it[Bills.description],
+                            it[updated]
+                        )
+                    }
+            }
+
+            call.respond(HttpStatusCode.OK, vote)
+        } catch (e: NotFoundException) {
+            throw NotFoundException()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw ServiceUnavailableException()
+        }
     }
 }
 
