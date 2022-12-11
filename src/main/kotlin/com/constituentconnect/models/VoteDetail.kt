@@ -25,3 +25,20 @@ data class CreateVoteDetailRequest(
     val cons: String?,
     val reasoning: String
 )
+
+@Serializable
+data class VoteDetailResponse(
+    val id: Int,
+    val voteDetailId: Int?,
+    val voteSubmitted: Boolean,
+    val billName: String,
+    val billDescription: String,
+    val vote: String?,
+    val pros: String?,
+    val cons: String?,
+    val reasoning: String?,
+    @Serializable(InstantSerializer::class)
+    val created: Instant?,
+    @Serializable(InstantSerializer::class)
+    val updated: Instant?
+)
