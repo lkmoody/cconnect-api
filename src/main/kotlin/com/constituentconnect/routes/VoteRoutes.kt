@@ -87,7 +87,7 @@ private fun Route.getVotes() {
                         voteCountQuery.andWhere {
                             voteDetailId.isNotNull()
                         }
-                    } else {
+                    } else if (statusFilter == "open") {
                         voteCountQuery.andWhere {
                             voteDetailId.isNull()
                         }
@@ -117,7 +117,7 @@ private fun Route.getVotes() {
                         votesQuery.andWhere {
                             voteDetailId.isNotNull()
                         }
-                    } else {
+                    } else if (statusFilter == "open") {
                         votesQuery.andWhere {
                             voteDetailId.isNull()
                         }
