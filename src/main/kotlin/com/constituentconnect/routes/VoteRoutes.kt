@@ -37,7 +37,7 @@ private fun Route.getVote() {
 
             val vote = transaction {
                 Votes.innerJoin(Bills, { billId }, { Bills.id })
-                    .slice(Votes.id, billId, userId, voteDetailId, voteDetailId.isNotNull(), Bills.name, Bills.description, updated)
+                    .slice(Votes.id, billId, userId, voteDetailId.isNotNull(), Bills.name, Bills.description, updated)
                     .select {
                         (userId eq userIdFilter) and (Votes.id eq voteId)
                     }
@@ -48,7 +48,6 @@ private fun Route.getVote() {
                             it[Votes.id].toString().toInt(),
                             it[billId],
                             it[userId],
-                            it[voteDetailId],
                             it[voteDetailId.isNotNull()],
                             it[Bills.name],
                             it[Bills.description],
@@ -105,7 +104,7 @@ private fun Route.getVotes() {
 
             val votes = transaction {
                 val votesQuery = Votes.innerJoin(Bills, { billId }, { Bills.id })
-                    .slice(Votes.id, billId, userId, voteDetailId, voteDetailId.isNotNull(), Bills.name, Bills.description, updated)
+                    .slice(Votes.id, billId, userId, voteDetailId.isNotNull(), Bills.name, Bills.description, updated)
                     .select {
                         userId eq userIdFilter
                     }
@@ -129,7 +128,6 @@ private fun Route.getVotes() {
                         it[Votes.id].toString().toInt(),
                         it[billId],
                         it[userId],
-                        it[voteDetailId],
                         it[voteDetailId.isNotNull()],
                         it[Bills.name],
                         it[Bills.description],
