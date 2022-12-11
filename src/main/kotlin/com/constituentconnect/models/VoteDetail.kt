@@ -28,7 +28,7 @@ data class CreateVoteDetailRequest(
 
 @Serializable
 data class VoteDetailResponse(
-    val id: Int,
+    val voteId: Int,
     val voteDetailId: Int?,
     val voteSubmitted: Boolean,
     val billName: String,
