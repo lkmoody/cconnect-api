@@ -8,7 +8,7 @@ data class Vote(
     val id: Int,
     val billId: Int,
     val userId: String,
-    val voteDetailId: Int,
+    val voteDetailId: Int?,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -20,7 +20,6 @@ data class VoteResponse(
     val id: Int,
     val billId: Int,
     val userId: String,
-    //val voteDetailId: Int,
     val voteSubmitted: Boolean,
     val billName: String,
     val billDescription: String,

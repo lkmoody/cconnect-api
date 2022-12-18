@@ -28,7 +28,7 @@ private fun Route.getVoteDetail() {
     get {
         try {
             val userId = call.parameters["userId"] ?: ""
-            val id = call.parameters["id"]?.toInt() ?: 0
+            val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
 
             val voteDetail = transaction {
                 Votes.leftJoin(VoteDetails, { Votes.id }, { VoteDetails.voteId })

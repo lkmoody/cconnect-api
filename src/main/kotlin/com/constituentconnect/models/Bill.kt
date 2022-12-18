@@ -20,6 +20,44 @@ data class Bill(
     val updated: Instant
 )
 
+@Serializable
+data class BillResponse(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val voteClosed: Boolean,
+    @Serializable(InstantSerializer::class)
+    val created: Instant,
+    @Serializable(InstantSerializer::class)
+    val updated: Instant
+)
+
+@Serializable
+data class BillListResponse(
+    val items: List<BillResponse>,
+    val page: Int,
+    val totalPages: Int
+)
+
+@Serializable
+data class BillDetailResponse(
+    val id: Int,
+    val name: String,
+    val description: String,
+    val voteClosed: Boolean,
+    @Serializable(InstantSerializer::class)
+    val created: Instant,
+    @Serializable(InstantSerializer::class)
+    val updated: Instant
+)
+
+@Serializable
+data class BillDetailListResponse(
+    val items: List<BillDetailResponse>,
+    val page: Int,
+    val totalPages: Int
+)
+
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
 

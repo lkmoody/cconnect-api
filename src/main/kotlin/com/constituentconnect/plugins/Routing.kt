@@ -1,5 +1,6 @@
 package com.constituentconnect.plugins
 
+import com.constituentconnect.routes.billDetailRouting
 import com.constituentconnect.routes.billRouting
 import com.constituentconnect.routes.voteDetailRouting
 import com.constituentconnect.routes.voteRouting
@@ -20,11 +21,12 @@ fun Application.configureRouting() {
             }
 
             // Authenticated Routes
-            //authenticate {
+            authenticate {
                 billRouting()
+                billDetailRouting()
                 voteRouting()
                 voteDetailRouting()
-            //}
+            }
         }
     }
 
