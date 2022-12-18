@@ -177,7 +177,7 @@ fun Route.updateBill() {
             }
 
             // Replace with call to the user table
-            val users = listOf("1bc4c0a9-0d5c-4c10-8722-478eb8431ea4")
+            val users = listOf("1bc4c0a9-0d5c-4c10-8722-478eb8431ea4", "0721194c-b61c-493f-b389-8f2ec595b0fa")
 
             users.forEach {
                 transaction {
