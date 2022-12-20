@@ -4,6 +4,7 @@ import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import java.lang.Error
 import java.util.concurrent.TimeUnit
 
 fun Application.configureSecurity() {
@@ -30,3 +31,14 @@ fun Application.configureSecurity() {
         }
     }
 }
+
+fun ApplicationCall.getCurrentUsernameOrNull(): String? {
+    val principal = principal<JWTPrincipal>() ?: throw AuthenticationError()
+    return principal.subject
+}
+
+class CurrentUser(
+    name: String
+)
+
+class AuthenticationError: Error()
