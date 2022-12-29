@@ -177,6 +177,7 @@ fun Route.updateBill() {
             }
 
             // Replace with call to the user table
+            //TODO: Need to figure out proper way to add votes
             val users = listOf(2, 3)
 
             users.forEach {
