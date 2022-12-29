@@ -36,7 +36,7 @@ object Users : IntIdTable("core.users") {
     val updated = timestamp("updated").default(Instant.now())
 }
 
-fun getCurrentUser(username: String): User? {
+fun getCurrentUserByAuthId(username: String): User? {
     val user = transaction {
         Users.select {
             Users.authId eq username
@@ -83,10 +83,10 @@ fun createNewUser(username: String, userEmail: String): User {
     return user
 }
 
-fun updateUserInfo(username: String, updateUserRequest: UpdateUserRequest) {
+fun updateUserInfo(updateUserRequest: UpdateUserRequest) {
     transaction {
         val userId = Users.select {
-            Users.authId eq username
+            Users.id eq updateUserRequest.id
         }    .limit(1)
             .singleOrNull()
             ?.let{

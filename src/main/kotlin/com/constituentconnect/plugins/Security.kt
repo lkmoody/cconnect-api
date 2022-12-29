@@ -1,11 +1,17 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
+import io.ktor.client.*
+import io.ktor.http.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import java.lang.Error
+import java.net.URI
 import java.util.concurrent.TimeUnit
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 
 fun Application.configureSecurity() {
     install(Authentication) {
@@ -22,7 +28,7 @@ fun Application.configureSecurity() {
             }
 
             validate { credential ->
-                if (credential.payload.getClaim("client_id").asString() in audiences && credential.payload.getClaim("token_use").asString() == "access") {
+                if (credential.payload.getClaim("aud").asString() in audiences && credential.payload.getClaim("token_use").asString() == "id") {
                     JWTPrincipal(credential.payload)
                 } else {
                     null
@@ -32,9 +38,14 @@ fun Application.configureSecurity() {
     }
 }
 
-fun ApplicationCall.getCurrentUsernameOrNull(): String? {
+fun ApplicationCall.getCurrentUsername(): String {
     val principal = principal<JWTPrincipal>() ?: throw AuthenticationError()
-    return principal.subject
+    return principal.payload.claims["sub"]?.asString() ?: throw AuthenticationError()
+}
+
+fun ApplicationCall.getCurrentUserEmail(): String {
+    val principal = principal<JWTPrincipal>() ?: throw AuthenticationError()
+    return principal.payload.claims["email"]?.asString() ?: throw AuthenticationError()
 }
 
 class CurrentUser(

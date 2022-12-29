@@ -20,6 +20,7 @@ class User(
 
 @Serializable
 class UpdateUserRequest(
+    val id: Int,
     val firstName: String? = null,
     val lastName: String? = null,
     val displayName: String? = null,

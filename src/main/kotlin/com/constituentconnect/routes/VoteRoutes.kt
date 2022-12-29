@@ -32,7 +32,7 @@ fun Route.voteRouting() {
 private fun Route.getVote() {
     get {
         try {
-            val userIdFilter = call.parameters["userId"] ?: ""
+            val userIdFilter = call.parameters["userId"]?.toInt() ?: 0
             val voteId = call.parameters["id"]?.toInt() ?: throw NotFoundException()
 
             val vote = transaction {
@@ -78,7 +78,7 @@ private fun Route.getVote() {
 private fun Route.getVotes() {
     get {
         try {
-            val userIdFilter = call.parameters["userId"] ?: ""
+            val userIdFilter = call.parameters["userId"]?.toInt() ?: 0
             val pageNumberFilter = call.request.queryParameters["page"]?.toInt() ?: 1
             val statusFilter = call.request.queryParameters["status"]
             val pageCount = 50

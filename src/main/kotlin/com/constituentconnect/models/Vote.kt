@@ -7,7 +7,7 @@ import java.time.Instant
 data class Vote(
     val id: Int,
     val billId: Int,
-    val userId: String,
+    val userId: Int,
     val voteDetailId: Int?,
     @Serializable(InstantSerializer::class)
     val created: Instant,
@@ -19,7 +19,7 @@ data class Vote(
 data class VoteResponse(
     val id: Int,
     val billId: Int,
-    val userId: String,
+    val userId: Int,
     val voteSubmitted: Boolean,
     val billName: String,
     val billDescription: String,

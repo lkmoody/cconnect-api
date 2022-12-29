@@ -27,7 +27,7 @@ fun Route.voteDetailRouting() {
 private fun Route.getVoteDetail() {
     get {
         try {
-            val userId = call.parameters["userId"] ?: ""
+            val userId = call.parameters["userId"]?.toInt() ?: 0
             val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
 
             val voteDetail = transaction {

@@ -19,7 +19,7 @@ class VoteEntity(id: EntityID<Int>) : IntEntity(id) {
 
 object Votes : IntIdTable("core.votes") {
     val billId = integer("billId")
-    val userId = text("userId")
+    val userId = integer("userId")
     val voteDetailId = integer("voteDetailId").nullable()
     val created = timestamp("created")
     val updated = timestamp("updated")
