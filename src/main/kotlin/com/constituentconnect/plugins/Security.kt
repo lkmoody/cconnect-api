@@ -1,11 +1,16 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.constituentconnect.database.Users
+import com.constituentconnect.models.User
 import io.ktor.client.*
 import io.ktor.http.cio.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.lang.Error
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -36,6 +41,31 @@ fun Application.configureSecurity() {
             }
         }
     }
+}
+
+fun ApplicationCall.getCurrentUser(): User {
+    val username = getCurrentUsername()
+    val user = transaction {
+        Users.select {
+            Users.authId eq username
+        }
+            .limit(1)
+            .singleOrNull()
+            ?.let {
+                User(
+                    it[Users.id].toString().toInt(),
+                    it[Users.authId],
+                    it[Users.firstName],
+                    it[Users.lastName],
+                    it[Users.displayName],
+                    it[Users.phone],
+                    it[Users.email],
+                    it[Users.created],
+                    it[Users.updated]
+                )
+            } ?: throw throw AuthenticationError()
+    }
+    return user
 }
 
 fun ApplicationCall.getCurrentUsername(): String {

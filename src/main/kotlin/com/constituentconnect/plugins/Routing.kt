@@ -17,6 +17,8 @@ fun Application.configureRouting() {
                 call.respond(HttpStatusCode.OK)
             }
 
+            //callbackRouting()
+
             // Authenticated Routes
             authenticate {
                 userRouting()
@@ -24,6 +26,8 @@ fun Application.configureRouting() {
                 billDetailRouting()
                 voteRouting()
                 voteDetailRouting()
+                settingsRouting()
+                callbackRouting()
             }
         }
     }

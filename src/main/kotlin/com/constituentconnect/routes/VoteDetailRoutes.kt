@@ -3,6 +3,9 @@ package com.constituentconnect.routes
 import com.constituentconnect.database.*
 import com.constituentconnect.models.CreateVoteDetailRequest
 import com.constituentconnect.models.VoteDetailResponse
+import com.constituentconnect.plugins.getCurrentUser
+import com.constituentconnect.plugins.postTweet
+import com.constituentconnect.plugins.voteTweetEnabled
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
@@ -98,6 +101,10 @@ private fun Route.createVoteDetail() {
                 Votes.update({ Votes.id eq voteDetail.voteId }) {
                     it[voteDetailId] = voteDetail.id.toString().toInt()
                 }
+            }
+
+            if(call.voteTweetEnabled()) {
+                call.postTweet(voteDetail.reasoning)
             }
 
             call.respond(HttpStatusCode.Created, voteDetailToApi(voteDetail))

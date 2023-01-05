@@ -4,6 +4,7 @@ val logback_version: String by project
 val exposed_version: String by project
 val postgresql_version: String by project
 val aws_version: String by project
+val twitter_api_version: String by project
 
 plugins {
     application
@@ -36,6 +37,11 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jvm:2.1.2")
     implementation("io.ktor:ktor-server-auth-jwt-jvm:2.1.2")
 
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+
     implementation("org.jetbrains.exposed:exposed-core:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
@@ -51,6 +57,8 @@ dependencies {
     implementation("io.ktor:ktor-server-status-pages-jvm:2.1.3")
 
     implementation("com.amazonaws:aws-java-sdk:$aws_version")
+
+    implementation("com.twitter:twitter-api-java-sdk:$twitter_api_version")
 
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

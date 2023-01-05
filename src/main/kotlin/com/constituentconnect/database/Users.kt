@@ -1,5 +1,6 @@
 package com.constituentconnect.database
 
+import com.amazonaws.services.sns.model.AuthorizationErrorException
 import com.constituentconnect.models.UpdateUserRequest
 import com.constituentconnect.models.User
 import com.constituentconnect.plugins.AuthenticationError
@@ -36,7 +37,7 @@ object Users : IntIdTable("core.users") {
     val updated = timestamp("updated").default(Instant.now())
 }
 
-fun getCurrentUserByAuthId(username: String): User? {
+fun getCurrentUserByAuthId(username: String): User {
     val user = transaction {
         Users.select {
             Users.authId eq username
@@ -55,7 +56,7 @@ fun getCurrentUserByAuthId(username: String): User? {
                 it[Users.created],
                 it[Users.updated]
             )
-        } ?: null
+        } ?: throw throw AuthenticationError()
     }
     return user
 }
