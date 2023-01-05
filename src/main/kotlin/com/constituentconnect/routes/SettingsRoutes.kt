@@ -50,6 +50,7 @@ fun Route.twitterAccessRequest() {
             val oauthNonce = call.getNonce()
             var oauthTimestamp = (System.currentTimeMillis() / 1000).toString()
             val callbackUrl = call.getCallbackUrl() + "?userId=${user.id}"
+            println(callbackUrl)
             val oauthCallback = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8.toString())
 
             // Create the parameter string used to create the signature. Be careful modifying this. The string needs to be constructed in a very particular manner.
@@ -79,31 +80,26 @@ fun Route.twitterAccessRequest() {
             val authorizationHeader = "OAuth oauth_consumer_key=\"$oauthConsumerKey\",oauth_signature_method=\"$oauthSignatureMethod\",oauth_timestamp=\"$oauthTimestamp\",oauth_nonce=\"$oauthNonce\",oauth_version=\"1.0\",oauth_callback=\"$oauthCallback\",oauth_signature=\"$urlEncodedOauthSignature\""
             println(authorizationHeader)
 
-            try {
-                val client = HttpClient(CIO)
-                val response = client.request("$twitterApiUrl/oauth/request_token") {
-                    method = HttpMethod.Post
-                    headers {
-                        append(HttpHeaders.Authorization, authorizationHeader)
-                    }
+            val client = HttpClient(CIO)
+            val response = client.request("$twitterApiUrl/oauth/request_token") {
+                method = HttpMethod.Post
+                headers {
+                    append(HttpHeaders.Authorization, authorizationHeader)
                 }
-
-                var oauthResults = HashMap<String, String>()
-                println(response.bodyAsText())
-                val splitValues = response.bodyAsText().split("&")
-                for(value in splitValues) {
-                    val keyValue = value.split("=")
-                    oauthResults.put(keyValue[0], keyValue[1])
-                }
-                val oauthToken = oauthResults["oauth_token"]
-
-                val authUrl = "$twitterApiUrl/oauth/authorize?oauth_token=$oauthToken"
-
-                call.respond(HttpStatusCode.OK, authUrl)
-
-            } catch (e: Error) {
-
             }
+
+            var oauthResults = HashMap<String, String>()
+            println(response.bodyAsText())
+            val splitValues = response.bodyAsText().split("&")
+            for(value in splitValues) {
+                val keyValue = value.split("=")
+                oauthResults.put(keyValue[0], keyValue[1])
+            }
+            val oauthToken = oauthResults["oauth_token"]
+
+            val authUrl = "$twitterApiUrl/oauth/authorize?oauth_token=$oauthToken"
+
+            call.respond(HttpStatusCode.OK, authUrl)
         } catch (e: Error) {
 
         } finally {
