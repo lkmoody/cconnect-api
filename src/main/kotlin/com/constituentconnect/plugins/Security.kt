@@ -1,8 +1,11 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.constituentconnect.database.UserSettingEntity
+import com.constituentconnect.database.UserSettings.userID
 import com.constituentconnect.database.Users
 import com.constituentconnect.models.User
+import com.constituentconnect.models.UserSettings
 import io.ktor.client.*
 import io.ktor.http.cio.*
 import io.ktor.server.application.*
@@ -12,6 +15,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.lang.Error
+import java.lang.Exception
 import java.net.URI
 import java.util.concurrent.TimeUnit
 import java.net.http.HttpClient
@@ -43,7 +47,7 @@ fun Application.configureSecurity() {
     }
 }
 
-fun ApplicationCall.getCurrentUser(): User {
+fun ApplicationCall.getCurrentUser(): User? {
     val username = getCurrentUsername()
     val user = transaction {
         Users.select {
@@ -60,26 +64,44 @@ fun ApplicationCall.getCurrentUser(): User {
                     it[Users.displayName],
                     it[Users.phone],
                     it[Users.email],
+                    null,
                     it[Users.created],
                     it[Users.updated]
                 )
-            } ?: throw throw AuthenticationError()
+            }
     }
+
+    if(user != null) {
+        var userSettings = transaction {
+            UserSettingEntity.find { userID eq user.id }.firstOrNull()
+        }
+
+        if(userSettings == null) {
+            userSettings = transaction {
+                UserSettingEntity.new {
+                    userID = user.id
+                }
+            }
+        }
+
+        user.settings = userSettings.let {
+            UserSettings(
+                it.voteTextNotificationEnabled,
+                it.twitterVotePostEnabled
+            )
+        }
+    }
+
     return user
 }
 
 fun ApplicationCall.getCurrentUsername(): String {
-    val principal = principal<JWTPrincipal>() ?: throw AuthenticationError()
-    return principal.payload.claims["sub"]?.asString() ?: throw AuthenticationError()
+    val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
+    return principal.payload.claims["sub"]?.asString() ?: throw AuthenticationException()
 }
 
 fun ApplicationCall.getCurrentUserEmail(): String {
-    val principal = principal<JWTPrincipal>() ?: throw AuthenticationError()
-    return principal.payload.claims["email"]?.asString() ?: throw AuthenticationError()
+    val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
+    return principal.payload.claims["email"]?.asString() ?: throw AuthenticationException()
 }
-
-class CurrentUser(
-    name: String
-)
-
-class AuthenticationError: Error()
+class AuthenticationException: Exception()

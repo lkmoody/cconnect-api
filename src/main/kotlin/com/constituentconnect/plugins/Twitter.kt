@@ -41,13 +41,14 @@ fun ApplicationCall.getNonce(): String {
 }
 
 fun ApplicationCall.voteTweetEnabled(): Boolean {
+    val user = getCurrentUser() ?: throw AuthenticationException()
     return transaction {
-        UserSettingEntity.find { UserSettings.userID eq getCurrentUser().id }.first().twitterVotePostEnabled
+        UserSettingEntity.find { UserSettings.userID eq user.id }.first().twitterVotePostEnabled
     }
 }
 
 fun ApplicationCall.getTwitterTokens(): Pair<String, String> {
-    val user = getCurrentUser()
+    val user = getCurrentUser() ?: throw AuthenticationException()
     val userTweet = transaction {
         UserTwitterEntity.find {UserTwitters.userId eq user.id}.first() ?: throw Error()
     }

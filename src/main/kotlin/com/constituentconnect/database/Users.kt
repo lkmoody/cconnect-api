@@ -1,13 +1,15 @@
 package com.constituentconnect.database
 
-import com.amazonaws.services.sns.model.AuthorizationErrorException
+import com.constituentconnect.database.UserSettings.userID
 import com.constituentconnect.models.UpdateUserRequest
 import com.constituentconnect.models.User
-import com.constituentconnect.plugins.AuthenticationError
+import com.constituentconnect.models.UserSettings
+import com.constituentconnect.plugins.AuthenticationException
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -37,30 +39,6 @@ object Users : IntIdTable("core.users") {
     val updated = timestamp("updated").default(Instant.now())
 }
 
-fun getCurrentUserByAuthId(username: String): User {
-    val user = transaction {
-        Users.select {
-            Users.authId eq username
-        }
-            .limit(1)
-            .singleOrNull()
-            ?.let {
-            User(
-                it[Users.id].toString().toInt(),
-                it[Users.authId],
-                it[Users.firstName],
-                it[Users.lastName],
-                it[Users.displayName],
-                it[Users.phone],
-                it[Users.email],
-                it[Users.created],
-                it[Users.updated]
-            )
-        } ?: throw throw AuthenticationError()
-    }
-    return user
-}
-
 fun createNewUser(username: String, userEmail: String): User {
     val user = transaction {
         UserEntity.new {
@@ -75,10 +53,24 @@ fun createNewUser(username: String, userEmail: String): User {
                 it.displayName,
                 it.phone,
                 it.email,
+                null,
                 it.created,
                 it.updated
             )
         }
+    }
+
+    val userSettings = transaction {
+        UserSettingEntity.new {
+            userID = user.id
+        }
+    }
+
+    user.settings = userSettings.let {
+        UserSettings(
+            it.voteTextNotificationEnabled,
+            it.twitterVotePostEnabled
+        )
     }
 
     return user
@@ -88,11 +80,11 @@ fun updateUserInfo(updateUserRequest: UpdateUserRequest) {
     transaction {
         val userId = Users.select {
             Users.id eq updateUserRequest.id
-        }    .limit(1)
+        }.limit(1)
             .singleOrNull()
-            ?.let{
+            ?.let {
                 it[Users.id].toString().toInt()
-            } ?: throw AuthenticationError()
+            } ?: throw AuthenticationException()
 
         val user = UserEntity.findById(userId)
         user?.firstName = updateUserRequest.firstName

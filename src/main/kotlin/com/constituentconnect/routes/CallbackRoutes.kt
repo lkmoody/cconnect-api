@@ -1,11 +1,12 @@
 package com.constituentconnect.routes
 
-import com.constituentconnect.database.*
-import com.constituentconnect.plugins.AuthenticationError
+import com.constituentconnect.database.UserSettingEntity
+import com.constituentconnect.database.UserSettings
+import com.constituentconnect.database.UserTwitterEntity
+import com.constituentconnect.database.UserTwitters
+import com.constituentconnect.plugins.AuthenticationException
 import com.constituentconnect.plugins.getApiUrl
-import com.constituentconnect.plugins.getCurrentUsername
-import com.constituentconnect.plugins.postTweet
-import com.twitter.clientlib.model.User
+import com.constituentconnect.plugins.getCurrentUser
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -17,7 +18,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.HashMap
 
 fun Route.callbackRouting() {
     route("/callback") {
@@ -29,66 +29,77 @@ fun Route.callbackRouting() {
 
 fun Route.twitterCallbackAuth() {
     post {
-        println("Start")
-        val callbackAuthRequest = call.receive<CallbackAuthRequest>()
-        val twitterApiUrl = call.getApiUrl()
+        val clientErrorMessage = "There was an issue trying to authorize with Twitter"
         try {
-            val client = HttpClient(CIO)
-            val response = client.post("$twitterApiUrl/oauth/access_token?oauth_verifier=${callbackAuthRequest.oauthVerifier}&oauth_token=${callbackAuthRequest.oauthToken}")
-
-            var oauthResults = HashMap<String, String>()
-            println(response.bodyAsText())
-            val splitValues = response.bodyAsText().split("&")
-            for(value in splitValues) {
-                val keyValue = value.split("=")
-                oauthResults[keyValue[0]] = keyValue[1]
+            val user = call.getCurrentUser() ?: throw AuthenticationException()
+            val callbackAuthRequest = call.receive<CallbackAuthRequest>()
+            val requestAccessToken = transaction {
+                UserTwitterEntity.find { UserTwitters.userId eq user.id }.firstOrNull()?.requestAccessToken
             }
 
-            if(response.status == HttpStatusCode.OK) {
-                val oauthToken = oauthResults["oauth_token"] ?: throw AuthenticationError()
-                val oauthTokenSecret = oauthResults["oauth_token_secret"] ?: throw AuthenticationError()
-                transaction {
-                    val userTwitter = UserTwitterEntity.find { UserTwitters.userId eq callbackAuthRequest.userId }.firstOrNull()
-                    if(userTwitter == null) {
-                        UserTwitterEntity.new {
-                            userId = callbackAuthRequest.userId
-                            token = oauthToken
-                            secret = oauthTokenSecret
-                        }
-                    } else {
-                        userTwitter.token = oauthToken
-                        userTwitter.secret = oauthTokenSecret
-                    }
+            if (requestAccessToken == callbackAuthRequest.oauthToken) {
+                val twitterApiUrl = call.getApiUrl()
+                val client = HttpClient(CIO)
+                val response =
+                    client.post("$twitterApiUrl/oauth/access_token?oauth_verifier=${callbackAuthRequest.oauthVerifier}&oauth_token=${callbackAuthRequest.oauthToken}")
+
+                val oauthResults = HashMap<String, String>()
+                println(response.bodyAsText())
+                val splitValues = response.bodyAsText().split("&")
+                for (value in splitValues) {
+                    val keyValue = value.split("=")
+                    oauthResults[keyValue[0]] = keyValue[1]
                 }
 
-                transaction {
-                    val userSettings = UserSettingEntity.find { UserSettings.userID eq callbackAuthRequest.userId }.firstOrNull()
-                    if (userSettings == null) {
-                        UserSettingEntity.new {
-                            userID = callbackAuthRequest.userId
-                            twitterVotePostEnabled = true
-                            voteTextNotificationEnabled = false
+                if (response.status == HttpStatusCode.OK) {
+                    val oauthToken = oauthResults["oauth_token"] ?: throw AuthenticationException()
+                    val oauthTokenSecret = oauthResults["oauth_token_secret"] ?: throw AuthenticationException()
+                    transaction {
+                        val userTwitter = UserTwitterEntity.find { UserTwitters.userId eq user.id }.firstOrNull()
+                        if (userTwitter == null) {
+                            UserTwitterEntity.new {
+                                userId = user.id
+                                token = oauthToken
+                                secret = oauthTokenSecret
+                            }
+                        } else {
+                            userTwitter.token = oauthToken
+                            userTwitter.secret = oauthTokenSecret
                         }
-                    } else {
-                        userSettings.twitterVotePostEnabled = true
                     }
-                }
 
-                call.respond(HttpStatusCode.OK)
+                    transaction {
+                        val userSettings = UserSettingEntity.find { UserSettings.userID eq user.id }.firstOrNull()
+                        if (userSettings == null) {
+                            UserSettingEntity.new {
+                                userID = user.id
+                                twitterVotePostEnabled = true
+                                voteTextNotificationEnabled = false
+                            }
+                        } else {
+                            userSettings.twitterVotePostEnabled = true
+                        }
+                    }
+
+                    call.respond(HttpStatusCode.OK, HttpStatusCode.OK.toString())
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+                    println(response.status)
+                }
             } else {
-                call.respond(response.status)
+                call.respond(HttpStatusCode.InternalServerError, callbackAuthRequest)
+                println("Token did not match the request token.")
             }
 
-        } catch (e: Error) {
-
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+            println(e.message)
         }
-        call.respond(HttpStatusCode.OK)
     }
 }
 
 @Serializable
 data class CallbackAuthRequest(
-    val userId: Int,
     val oauthToken: String,
     val oauthVerifier: String
 )

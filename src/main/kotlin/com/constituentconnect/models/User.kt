@@ -12,10 +12,17 @@ class User(
     val displayName: String? = null,
     val phone: Int? = null,
     val email: String,
+    var settings: UserSettings? = null,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
     val updated: Instant
+)
+
+@Serializable
+class UserSettings(
+    val voteTextNotificationEnabled: Boolean,
+    val twitterVotePostEnabled: Boolean
 )
 
 @Serializable

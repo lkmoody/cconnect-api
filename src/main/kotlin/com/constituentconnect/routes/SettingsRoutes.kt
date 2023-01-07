@@ -1,6 +1,7 @@
 package com.constituentconnect.routes
 
-import com.constituentconnect.database.getCurrentUserByAuthId
+import com.constituentconnect.database.*
+import com.constituentconnect.plugins.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -10,18 +11,20 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.apache.commons.codec.binary.Base64
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-import java.security.GeneralSecurityException
-import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-import com.constituentconnect.plugins.*
 
 fun Route.settingsRouting() {
     route("/settings") {
         route("/twitter-auth-url") {
             twitterAccessRequest()
+        }
+
+        route("/user-settings") {
+            getUserSettings()
         }
 
         route("/tweet") {
@@ -39,9 +42,9 @@ fun Route.postTweet() {
 
 fun Route.twitterAccessRequest() {
     get {
+        val clientErrorMessage = "There was an issue trying to authorize with Twitter"
         try {
-            val username = call.getCurrentUsername()
-            var user = getCurrentUserByAuthId(username)
+            val user = call.getCurrentUser() ?: throw AuthenticationException()
 
             val oauthSignatureMethod = "HMAC-SHA1"
             val oauthConsumerKey = call.getConsumerKey()
@@ -49,36 +52,39 @@ fun Route.twitterAccessRequest() {
             val twitterApiUrl = call.getApiUrl()
             val oauthNonce = call.getNonce()
             var oauthTimestamp = (System.currentTimeMillis() / 1000).toString()
-            val callbackUrl = call.getCallbackUrl() + "?userId=${user.id}"
+            val callbackUrl = call.getCallbackUrl()// + "?userId=${user.id}"
             println(callbackUrl)
             val oauthCallback = URLEncoder.encode(callbackUrl, StandardCharsets.UTF_8.toString())
 
             // Create the parameter string used to create the signature. Be careful modifying this. The string needs to be constructed in a very particular manner.
             var parameterString = URLEncoder.encode("oauth_callback=$oauthCallback", StandardCharsets.UTF_8.toString())
-            parameterString += URLEncoder.encode("&oauth_consumer_key=$oauthConsumerKey", StandardCharsets.UTF_8.toString())
+            parameterString += URLEncoder.encode(
+                "&oauth_consumer_key=$oauthConsumerKey",
+                StandardCharsets.UTF_8.toString()
+            )
             parameterString += URLEncoder.encode("&oauth_nonce=$oauthNonce", StandardCharsets.UTF_8.toString())
-            parameterString += URLEncoder.encode("&oauth_signature_method=$oauthSignatureMethod", StandardCharsets.UTF_8.toString())
+            parameterString += URLEncoder.encode(
+                "&oauth_signature_method=$oauthSignatureMethod",
+                StandardCharsets.UTF_8.toString()
+            )
             parameterString += URLEncoder.encode("&oauth_timestamp=$oauthTimestamp", StandardCharsets.UTF_8.toString())
             parameterString += URLEncoder.encode("&oauth_version=1.0", StandardCharsets.UTF_8.toString())
-            println(parameterString)
 
-            val signatureBaseString = "POST&" + URLEncoder.encode("$twitterApiUrl/oauth/request_token", StandardCharsets.UTF_8.toString()) + "&$parameterString"
+            val signatureBaseString = "POST&" + URLEncoder.encode(
+                "$twitterApiUrl/oauth/request_token",
+                StandardCharsets.UTF_8.toString()
+            ) + "&$parameterString"
 
-            println(signatureBaseString)
             var oauthSignature = ""
-            try {
-                oauthSignature =
-                    computeSignature(signatureBaseString, "$oauthConsumerSecretKey&") // The "&" symbol needs to be at the end. Something to do with a possible auth token you can add to the end. We are not doing that but leave the symbol
-                println(oauthSignature)
-            } catch (e: GeneralSecurityException) {
-
-            }
+            oauthSignature = computeSignature(
+                signatureBaseString,
+                "$oauthConsumerSecretKey&"
+            ) // The "&" symbol needs to be at the end. Something to do with a possible auth token you can add to the end. We are not doing that but leave the symbol
 
             val urlEncodedOauthSignature = URLEncoder.encode(oauthSignature, StandardCharsets.UTF_8.toString())
-            println(urlEncodedOauthSignature)
 
-            val authorizationHeader = "OAuth oauth_consumer_key=\"$oauthConsumerKey\",oauth_signature_method=\"$oauthSignatureMethod\",oauth_timestamp=\"$oauthTimestamp\",oauth_nonce=\"$oauthNonce\",oauth_version=\"1.0\",oauth_callback=\"$oauthCallback\",oauth_signature=\"$urlEncodedOauthSignature\""
-            println(authorizationHeader)
+            val authorizationHeader =
+                "OAuth oauth_consumer_key=\"$oauthConsumerKey\",oauth_signature_method=\"$oauthSignatureMethod\",oauth_timestamp=\"$oauthTimestamp\",oauth_nonce=\"$oauthNonce\",oauth_version=\"1.0\",oauth_callback=\"$oauthCallback\",oauth_signature=\"$urlEncodedOauthSignature\""
 
             val client = HttpClient(CIO)
             val response = client.request("$twitterApiUrl/oauth/request_token") {
@@ -88,21 +94,64 @@ fun Route.twitterAccessRequest() {
                 }
             }
 
-            var oauthResults = HashMap<String, String>()
-            println(response.bodyAsText())
-            val splitValues = response.bodyAsText().split("&")
-            for(value in splitValues) {
-                val keyValue = value.split("=")
-                oauthResults.put(keyValue[0], keyValue[1])
+            if (response.status == HttpStatusCode.OK) {
+                var oauthResults = HashMap<String, String>()
+                println(response.bodyAsText())
+                val splitValues = response.bodyAsText().split("&")
+                for (value in splitValues) {
+                    val keyValue = value.split("=")
+                    oauthResults[keyValue[0]] = keyValue[1]
+                }
+                val oauthToken = oauthResults["oauth_token"]
+                val oauthTokenSecret = oauthResults["oauth_token_secret"]
+                val oauthCallbackConfirmed = oauthResults["oauth_callback_confirmed"].toBoolean()
+
+                if (oauthCallbackConfirmed) {
+                    transaction {
+                        val userTwitter = UserTwitterEntity.find { UserTwitters.userId eq user.id }.firstOrNull()
+                        if (userTwitter == null) {
+                            UserTwitterEntity.new {
+                                userId = user.id
+                                requestAccessToken = oauthToken ?: ""
+                                requestAccessTokenSecret = oauthTokenSecret ?: ""
+                            }
+                        } else {
+                            userTwitter.requestAccessToken = oauthToken ?: ""
+                            userTwitter.requestAccessTokenSecret = oauthTokenSecret ?: ""
+                        }
+                    }
+
+                    val authUrl = "$twitterApiUrl/oauth/authorize?oauth_token=$oauthToken"
+
+                    call.respond(HttpStatusCode.OK, authUrl)
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+                    println("Twitter callback confirm was false.")
+                }
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+                println(response.status)
             }
-            val oauthToken = oauthResults["oauth_token"]
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+            println(e.message)
+        }
+    }
+}
 
-            val authUrl = "$twitterApiUrl/oauth/authorize?oauth_token=$oauthToken"
+fun Route.getUserSettings() {
+    get {
+        val clientErrorMessage = "There was a problem getting the user settings."
+        try {
+            val user = call.getCurrentUser() ?: throw AuthenticationException()
 
-            call.respond(HttpStatusCode.OK, authUrl)
-        } catch (e: Error) {
-
-        } finally {
+            val userSettings = transaction {
+                UserSettingEntity.find { UserSettings.userID eq user.id }.first()
+            }
+            call.respond(HttpStatusCode.OK, userSettings)
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
+            println(e.message)
         }
     }
 }

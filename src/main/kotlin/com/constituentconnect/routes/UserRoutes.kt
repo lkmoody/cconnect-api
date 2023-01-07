@@ -1,9 +1,8 @@
 package com.constituentconnect.routes
 
-import com.constituentconnect.database.createNewUser
-import com.constituentconnect.database.getCurrentUserByAuthId
-import com.constituentconnect.database.updateUserInfo
+import com.constituentconnect.database.*
 import com.constituentconnect.models.UpdateUserRequest
+import com.constituentconnect.plugins.getCurrentUser
 import com.constituentconnect.plugins.getCurrentUserEmail
 import com.constituentconnect.plugins.getCurrentUsername
 import io.ktor.http.*
@@ -22,19 +21,17 @@ fun Route.userRouting() {
 fun Route.getUser() {
     get {
         try {
-            val email = call.getCurrentUserEmail()
-            val username = call.getCurrentUsername()
-            var user = getCurrentUserByAuthId(username)
+            var user = call.getCurrentUser()
 
             if (user == null) {
+                val email = call.getCurrentUserEmail()
+                val username = call.getCurrentUsername()
                 user = createNewUser(username, email)
             }
 
             call.respond(HttpStatusCode.OK, user)
-        } catch (e: ParameterMissingError) {
-
-        } catch (e: Error) {
-
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem getting user information.")
         }
     }
 }
