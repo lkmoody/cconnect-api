@@ -30,6 +30,10 @@ fun Route.billRouting() {
         getBillById()
         deleteBill()
     }
+
+    route("/bill/close-bill-vote") {
+        closeBillVote()
+    }
 }
 
 fun Route.getBills() {
@@ -87,6 +91,7 @@ fun Route.getBills() {
                         it[Bills.name],
                         it[Bills.description],
                         it[Bills.voteClosed],
+                        it[Bills.groupId],
                         it[Bills.created],
                         it[Bills.updated]
                     )
@@ -97,17 +102,17 @@ fun Route.getBills() {
 
             call.respond(HttpStatusCode.OK, response)
         } catch (e: Exception) {
-            e.printStackTrace()
-            //TODO: Need to implement logging
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem getting the list of bills.")
+            println(e.message)
         }
     }
 }
 
 fun Route.getBillById() {
     get {
+        val id = call.parameters["id"]?.toInt() ?: 0
+
         try {
-            val id = call.parameters["id"]?.toInt() ?: 0
             val billEntity = transaction {
                 BillEntity.findById(id) ?: throw NotFoundException()
             }
@@ -115,10 +120,10 @@ fun Route.getBillById() {
             val bill = billToApi(billEntity)
             call.respond(HttpStatusCode.OK, bill)
         } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound)
+            call.respond(HttpStatusCode.NotFound, "Unable to find the bill with id $id")
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem getting the bill.")
+            println(e.message)
         }
     }
 }
@@ -133,6 +138,7 @@ fun Route.createBill() {
                     name = createBillRequest.name
                     description = createBillRequest.description
                     voteClosed = createBillRequest.voteClosed
+                    groupId = createBillRequest.groupId
                     created = Instant.now()
                     updated = Instant.now()
                 }
@@ -140,8 +146,8 @@ fun Route.createBill() {
 
             call.respond(HttpStatusCode.Created, billToApi(billEntity))
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem creating the bill.")
+            println(e.message)
         }
     }
 }
@@ -155,6 +161,7 @@ fun Route.updateBill() {
                 billEntity.name = updateBillRequest.name ?: billEntity.name
                 billEntity.description = updateBillRequest.description ?: billEntity.description
                 billEntity.voteClosed = updateBillRequest.voteClosed ?: billEntity.voteClosed
+                billEntity.groupId = updateBillRequest.groupId ?: billEntity.groupId
                 billEntity.updated = Instant.now()
             }
 
@@ -170,6 +177,43 @@ fun Route.updateBill() {
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
+                            it[Bills.groupId],
+                            it[Bills.created],
+                            it[Bills.updated]
+                        )
+                    }
+            }
+
+            call.respond(HttpStatusCode.OK, bill)
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem updating the bill.")
+            println(e.message)
+        }
+    }
+}
+
+fun Route.closeBillVote() {
+    patch {
+        try {
+            val closeBillVoteRequest = call.receive<CloseBillVoteRequest>()
+            transaction {
+                val billEntity = BillEntity.findById(closeBillVoteRequest.id) ?: throw NotFoundException()
+                billEntity.voteClosed = true
+            }
+
+            val bill = transaction {
+                Bills.select {
+                    Bills.id eq closeBillVoteRequest.id
+                }
+                    .limit(1)
+                    .single()
+                    .let {
+                        BillResponse(
+                            it[Bills.id].toString().toInt(),
+                            it[Bills.name],
+                            it[Bills.description],
+                            it[Bills.voteClosed],
+                            it[Bills.groupId],
                             it[Bills.created],
                             it[Bills.updated]
                         )
@@ -178,26 +222,37 @@ fun Route.updateBill() {
 
             // Replace with call to the user table
             //TODO: Need to figure out proper way to add votes
-            val users = listOf(2, 3)
+            val users = transaction {
+                Users.join(UserGroups, JoinType.INNER, additionalConstraint = {Users.id eq UserGroups.userId})
+                    .slice(Users.id)
+                    .select {
+                        UserGroups.groupId eq bill.groupId
+                    }.map {
+                        it[Users.id].value
+                    }
+            }
 
             users.forEach {
                 transaction {
-                    VoteEntity.new {
-                        billId = bill.id
-                        userId = it
-                        voteDetailId = null
-                        created = Instant.now()
-                        updated = Instant.now()
+                    val vote = VoteEntity.find {
+                        (Votes.userId eq it) and (Votes.billId eq bill.id)
+                    }.firstOrNull()
+                    if (vote == null) {
+                        VoteEntity.new {
+                            billId = bill.id
+                            userId = it
+                            voteDetailId = null
+                            created = Instant.now()
+                            updated = Instant.now()
+                        }
                     }
                 }
             }
 
             call.respond(HttpStatusCode.OK, bill)
-        } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound)
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem closing the bill vote.")
+            println(e.message)
         }
     }
 }
@@ -215,11 +270,9 @@ fun Route.deleteBill() {
             }
 
             call.respond(HttpStatusCode.OK, "Deleted")
-        } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound)
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem deleting the bill.")
+            println(e.message)
         }
     }
 }
@@ -248,6 +301,7 @@ fun Route.resetBill() {
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
+                            it[Bills.groupId],
                             it[Bills.created],
                             it[Bills.updated]
                         )
@@ -295,11 +349,9 @@ fun Route.resetBill() {
             }
 
             call.respond(HttpStatusCode.OK, bill)
-        } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound)
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "Unable to reset the bill data.")
+            println(e.message)
         }
     }
 }
@@ -308,7 +360,8 @@ fun Route.resetBill() {
 data class CreateBillRequest(
     val name: String,
     val description: String,
-    val voteClosed: Boolean
+    val voteClosed: Boolean,
+    val groupId: Int
 )
 
 @Serializable
@@ -316,5 +369,11 @@ data class UpdateBillRequest(
     val id: Int,
     val name: String? = null,
     val description: String? = null,
-    val voteClosed: Boolean? = null
+    val voteClosed: Boolean? = null,
+    val groupId: Int? = null
+)
+
+@Serializable
+data class CloseBillVoteRequest(
+    val id: Int
 )

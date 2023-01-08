@@ -13,6 +13,7 @@ class User(
     val phone: Int? = null,
     val email: String,
     var settings: UserSettings? = null,
+    var groupId: Int? = null,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)

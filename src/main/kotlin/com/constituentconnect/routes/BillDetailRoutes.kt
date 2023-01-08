@@ -19,15 +19,16 @@ fun Route.billDetailRouting() {
 
 private fun Route.getBillDetail() {
     get {
-        try {
-            val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+        val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
 
+        try {
             val billDetail = transaction {
                 Bills.slice(
                     Bills.id,
                     Bills.name,
                     Bills.description,
                     Bills.voteClosed,
+                    Bills.groupId,
                     Bills.created,
                     Bills.updated
                 ).select {
@@ -41,6 +42,7 @@ private fun Route.getBillDetail() {
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
+                            it[Bills.groupId],
                             it[Bills.created],
                             it[Bills.updated]
                         )
@@ -49,10 +51,10 @@ private fun Route.getBillDetail() {
 
             call.respond(HttpStatusCode.OK, billDetail)
         } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound)
+            call.respond(HttpStatusCode.NotFound, "Unable to find the bill detail")
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem getting the bill detail for id $id")
+            println(e.message)
         }
     }
 }

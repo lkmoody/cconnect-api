@@ -14,6 +14,7 @@ data class Bill(
     val name: String,
     val description: String,
     val voteClosed: Boolean,
+    val groupId: Int,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -26,6 +27,7 @@ data class BillResponse(
     val name: String,
     val description: String,
     val voteClosed: Boolean,
+    val groupId: Int,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -45,6 +47,7 @@ data class BillDetailResponse(
     val name: String,
     val description: String,
     val voteClosed: Boolean,
+    val groupId: Int,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)

@@ -22,6 +22,7 @@ fun Application.configureRouting() {
             // Authenticated Routes
             authenticate {
                 userRouting()
+                groupRoutes()
                 billRouting()
                 billDetailRouting()
                 voteRouting()

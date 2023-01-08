@@ -54,6 +54,7 @@ fun createNewUser(username: String, userEmail: String): User {
                 it.phone,
                 it.email,
                 null,
+                null,
                 it.created,
                 it.updated
             )

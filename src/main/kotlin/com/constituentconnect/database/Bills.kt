@@ -13,6 +13,7 @@ class BillEntity(id: EntityID<Int>) : IntEntity(id) {
     var name by Bills.name
     var description by Bills.description
     var voteClosed by Bills.voteClosed
+    var groupId by Bills.groupId
     var created by Bills.created
     var updated by Bills.updated
 }
@@ -22,6 +23,7 @@ object Bills : IntIdTable("core.bills") {
     val name = text("name")
     val description = text("description")
     val voteClosed = bool("voteClosed")
+    val groupId = integer("groupId")
     val created = timestamp("created")
     val updated = timestamp("updated")
 }
@@ -32,6 +34,7 @@ fun billToApi(billEntity: BillEntity): Bill = Bill(
     billEntity.name,
     billEntity.description,
     billEntity.voteClosed,
+    billEntity.groupId,
     billEntity.created,
     billEntity.updated
 )

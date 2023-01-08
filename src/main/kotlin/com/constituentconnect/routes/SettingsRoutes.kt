@@ -8,6 +8,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.apache.commons.codec.binary.Base64
@@ -19,8 +20,17 @@ import javax.crypto.spec.SecretKeySpec
 
 fun Route.settingsRouting() {
     route("/settings") {
-        route("/twitter-auth-url") {
-            twitterAccessRequest()
+        route("/account/voting-group") {
+            updateUserGroup()
+        }
+        route("/notifications") {
+
+        }
+
+        route("/external-accounts") {
+            route("/twitter-auth-url") {
+                twitterAccessRequest()
+            }
         }
 
         route("/user-settings") {
@@ -29,6 +39,34 @@ fun Route.settingsRouting() {
 
         route("/tweet") {
             postTweet()
+        }
+    }
+}
+
+fun Route.updateUserGroup() {
+    patch {
+        try {
+            val user = call.getCurrentUser() ?: throw AuthenticationException()
+            val newGroupId = call.receiveText().toInt()
+
+            transaction {
+                val userGroup = UserGroupEntity.find {
+                    UserGroups.userId eq user.id
+                }.firstOrNull()
+
+                if (userGroup != null) {
+                    userGroup.groupId = newGroupId
+                } else {
+                    UserGroupEntity.new {
+                        userId = user.id
+                        groupId = newGroupId
+                    }
+                }
+            }
+
+            call.respond(HttpStatusCode.OK)
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem updating the users group.")
         }
     }
 }
@@ -163,3 +201,7 @@ fun computeSignature(baseString: String, keyString: String): String {
     val digest = mac.doFinal(baseString.toByteArray())
     return Base64.encodeBase64String(digest)
 }
+
+data class UpdateUserGroupRequest(
+    val groupId: Int
+)

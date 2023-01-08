@@ -1,6 +1,8 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.constituentconnect.database.UserGroupEntity
+import com.constituentconnect.database.UserGroups
 import com.constituentconnect.database.UserSettingEntity
 import com.constituentconnect.database.UserSettings.userID
 import com.constituentconnect.database.Users
@@ -65,6 +67,7 @@ fun ApplicationCall.getCurrentUser(): User? {
                     it[Users.phone],
                     it[Users.email],
                     null,
+                    null,
                     it[Users.created],
                     it[Users.updated]
                 )
@@ -90,6 +93,16 @@ fun ApplicationCall.getCurrentUser(): User? {
                 it.twitterVotePostEnabled
             )
         }
+
+        var userGroupId = transaction {
+            UserGroupEntity.find {
+                (UserGroups.userId eq user.id)
+            }.firstOrNull().let {
+                it?.groupId ?: null
+            }
+        }
+
+        user.groupId = userGroupId
     }
 
     return user

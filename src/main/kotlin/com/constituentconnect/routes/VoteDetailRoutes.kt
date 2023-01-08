@@ -103,14 +103,13 @@ private fun Route.createVoteDetail() {
                 }
             }
 
+            call.respond(HttpStatusCode.Created, voteDetailToApi(voteDetail))
+
             if(call.voteTweetEnabled()) {
                 call.postTweet(voteDetail.reasoning)
             }
-
-            call.respond(HttpStatusCode.Created, voteDetailToApi(voteDetail))
         } catch (e: Exception) {
-            e.printStackTrace()
-            throw ServiceUnavailableException()
+            call.respond(HttpStatusCode.InternalServerError, "There was a problem saving the vote detail.")
         }
     }
 }
