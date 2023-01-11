@@ -81,7 +81,7 @@ private fun Route.getVotes() {
             val userIdFilter = call.parameters["userId"]?.toInt() ?: 0
             val pageNumberFilter = call.request.queryParameters["page"]?.toInt() ?: 1
             val statusFilter = call.request.queryParameters["status"]
-            val pageCount = 2
+            val pageCount = 20
             val skip = ((pageNumberFilter - 1) * pageCount).toLong()
 
             // Get the count of all rows to determine pages

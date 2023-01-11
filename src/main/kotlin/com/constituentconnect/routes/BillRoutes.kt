@@ -41,7 +41,7 @@ fun Route.getBills() {
         try {
             val pageNumberFilter = call.request.queryParameters["page"]?.toInt() ?: 1
             val statusFilter = call.request.queryParameters["status"]
-            val pageCount = 2
+            val pageCount = 20
             val skip = ((pageNumberFilter - 1) * pageCount).toLong()
 
             val billCount = transaction {
