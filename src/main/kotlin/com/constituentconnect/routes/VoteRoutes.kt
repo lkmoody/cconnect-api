@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
 import javax.naming.ServiceUnavailableException
 
 fun Route.voteRouting() {
@@ -32,8 +33,8 @@ fun Route.voteRouting() {
 private fun Route.getVote() {
     get {
         try {
-            val userIdFilter = call.parameters["userId"]?.toInt() ?: 0
-            val voteId = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+            val userIdFilter = UUID.fromString(call.parameters["userId"] ?: "")
+            val voteId = UUID.fromString(call.parameters["id"]) ?: throw NotFoundException()
 
             val vote = transaction {
                 Votes.innerJoin(Bills, { billId }, { Bills.id })
@@ -54,7 +55,7 @@ private fun Route.getVote() {
                     .single()
                     .let {
                         VoteResponse(
-                            it[Votes.id].toString().toInt(),
+                            it[Votes.id].value,
                             it[billId],
                             it[userId],
                             it[voteDetailId.isNotNull()],
@@ -78,7 +79,7 @@ private fun Route.getVote() {
 private fun Route.getVotes() {
     get {
         try {
-            val userIdFilter = call.parameters["userId"]?.toInt() ?: 0
+            val userIdFilter = UUID.fromString(call.parameters["userId"] ?: "")
             val pageNumberFilter = call.request.queryParameters["page"]?.toInt() ?: 1
             val statusFilter = call.request.queryParameters["status"]
             val pageCount = 20
@@ -143,7 +144,7 @@ private fun Route.getVotes() {
 
                 votesQuery.map {
                     VoteResponse(
-                        it[Votes.id].toString().toInt(),
+                        it[Votes.id].value,
                         it[billId],
                         it[userId],
                         it[voteDetailId.isNotNull()],

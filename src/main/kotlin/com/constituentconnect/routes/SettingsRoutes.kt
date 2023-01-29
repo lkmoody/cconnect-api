@@ -15,8 +15,10 @@ import org.apache.commons.codec.binary.Base64
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.collections.HashMap
 
 fun Route.settingsRouting() {
     route("/settings") {
@@ -47,7 +49,7 @@ fun Route.updateUserGroup() {
     patch {
         try {
             val user = call.getCurrentUser() ?: throw AuthenticationException()
-            val newGroupId = call.receiveText().toInt()
+            val newGroupId = UUID.fromString(call.receiveText())
 
             transaction {
                 val userGroup = UserGroupEntity.find {

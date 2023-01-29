@@ -59,7 +59,7 @@ fun ApplicationCall.getCurrentUser(): User? {
             .singleOrNull()
             ?.let {
                 User(
-                    it[Users.id].toString().toInt(),
+                    it[Users.id].value,
                     it[Users.authId],
                     it[Users.firstName],
                     it[Users.lastName],

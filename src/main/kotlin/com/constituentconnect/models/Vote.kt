@@ -2,13 +2,18 @@ package com.constituentconnect.models
 
 import kotlinx.serialization.Serializable
 import java.time.Instant
+import java.util.*
 
 @Serializable
 data class Vote(
-    val id: Int,
-    val billId: Int,
-    val userId: Int,
-    val voteDetailId: Int?,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
+    @Serializable(UUIDSerializer::class)
+    val billId: UUID,
+    @Serializable(UUIDSerializer::class)
+    val userId: UUID,
+    @Serializable(UUIDSerializer::class)
+    val voteDetailId: UUID?,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -17,9 +22,12 @@ data class Vote(
 
 @Serializable
 data class VoteResponse(
-    val id: Int,
-    val billId: Int,
-    val userId: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
+    @Serializable(UUIDSerializer::class)
+    val billId: UUID,
+    @Serializable(UUIDSerializer::class)
+    val userId: UUID,
     val voteSubmitted: Boolean,
     val billName: String,
     val billDescription: String,

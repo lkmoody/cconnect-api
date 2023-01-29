@@ -15,6 +15,7 @@ import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
+import java.util.*
 import javax.naming.ServiceUnavailableException
 
 fun Route.voteDetailRouting() {
@@ -30,8 +31,8 @@ fun Route.voteDetailRouting() {
 private fun Route.getVoteDetail() {
     get {
         try {
-            val userId = call.parameters["userId"]?.toInt() ?: 0
-            val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+            val userId = UUID.fromString(call.parameters["userId"] ?: "")
+            val id = UUID.fromString(call.parameters["id"]) ?: throw NotFoundException()
 
             val voteDetail = transaction {
                 Votes.leftJoin(VoteDetails, { Votes.id }, { VoteDetails.voteId })
@@ -55,9 +56,9 @@ private fun Route.getVoteDetail() {
                     .single()
                     .let {
                         VoteDetailResponse(
-                            it[Votes.id].toString().toInt(),
-                            it[VoteDetails.id]?.toString()?.toInt(),
-                            it[VoteDetails.id] != null,
+                            it[Votes.id].value,
+                            it[VoteDetails.id]?.value,
+                            it[VoteDetails.id]?.value != null,
                             it[Bills.name],
                             it[Bills.description],
                             it[VoteDetails.vote],
@@ -99,7 +100,7 @@ private fun Route.createVoteDetail() {
 
             transaction {
                 Votes.update({ Votes.id eq voteDetail.voteId }) {
-                    it[voteDetailId] = voteDetail.id.toString().toInt()
+                    it[voteDetailId] = voteDetail.id.value
                 }
             }
 

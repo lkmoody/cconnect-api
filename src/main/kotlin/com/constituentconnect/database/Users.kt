@@ -7,16 +7,20 @@ import com.constituentconnect.models.UserSettings
 import com.constituentconnect.plugins.AuthenticationException
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.javatime.timestamp
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
+import java.util.*
 
-class UserEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<UserEntity>(Users)
+class UserEntity(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object : UUIDEntityClass<UserEntity>(Users)
 
     var authId by Users.authId
     var firstName by Users.firstName
@@ -28,7 +32,7 @@ class UserEntity(id: EntityID<Int>) : IntEntity(id) {
     var updated by Users.updated
 }
 
-object Users : IntIdTable("core.users") {
+object Users : UUIDTable("core.users") {
     val authId = text("authId")
     val firstName = text("firstName").nullable()
     val lastName = text("lastName").nullable()
@@ -84,7 +88,7 @@ fun updateUserInfo(updateUserRequest: UpdateUserRequest) {
         }.limit(1)
             .singleOrNull()
             ?.let {
-                it[Users.id].toString().toInt()
+                it[Users.id]
             } ?: throw AuthenticationException()
 
         val user = UserEntity.findById(userId)

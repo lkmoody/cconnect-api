@@ -2,10 +2,12 @@ package com.constituentconnect.models
 
 import kotlinx.serialization.Serializable
 import java.time.Instant
+import java.util.UUID
 
 @Serializable
 class User(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val authId: String,
     val firstName: String? = null,
     val lastName: String? = null,
@@ -13,7 +15,8 @@ class User(
     val phone: Int? = null,
     val email: String,
     var settings: UserSettings? = null,
-    var groupId: Int? = null,
+    @Serializable(UUIDSerializer::class)
+    var groupId: UUID? = null,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -28,7 +31,8 @@ class UserSettings(
 
 @Serializable
 class UpdateUserRequest(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val firstName: String? = null,
     val lastName: String? = null,
     val displayName: String? = null,

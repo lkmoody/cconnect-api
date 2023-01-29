@@ -7,14 +7,17 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
+import java.util.UUID
 
 @Serializable
 data class Bill(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val name: String,
     val description: String,
     val voteClosed: Boolean,
-    val groupId: Int,
+    @Serializable(UUIDSerializer::class)
+    val groupId: UUID,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -23,11 +26,13 @@ data class Bill(
 
 @Serializable
 data class BillResponse(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val name: String,
     val description: String,
     val voteClosed: Boolean,
-    val groupId: Int,
+    @Serializable(UUIDSerializer::class)
+    val groupId: UUID,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -43,11 +48,13 @@ data class BillListResponse(
 
 @Serializable
 data class BillDetailResponse(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val name: String,
     val description: String,
     val voteClosed: Boolean,
-    val groupId: Int,
+    @Serializable(UUIDSerializer::class)
+    val groupId: UUID,
     @Serializable(InstantSerializer::class)
     val created: Instant,
     @Serializable(InstantSerializer::class)
@@ -69,6 +76,18 @@ object InstantSerializer : KSerializer<Instant> {
     }
 
     override fun serialize(encoder: Encoder, value: Instant) {
+        encoder.encodeString(value.toString())
+    }
+}
+
+object UUIDSerializer : KSerializer<UUID> {
+    override val descriptor = PrimitiveSerialDescriptor("UUID", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): UUID {
+        return UUID.fromString(decoder.decodeString())
+    }
+
+    override fun serialize(encoder: Encoder, value: UUID) {
         encoder.encodeString(value.toString())
     }
 }

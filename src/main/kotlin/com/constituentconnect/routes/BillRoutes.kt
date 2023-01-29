@@ -3,6 +3,7 @@ package com.constituentconnect.routes
 import com.constituentconnect.database.*
 import com.constituentconnect.models.BillListResponse
 import com.constituentconnect.models.BillResponse
+import com.constituentconnect.models.UUIDSerializer
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.*
@@ -13,6 +14,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Instant
+import java.util.*
 import javax.naming.ServiceUnavailableException
 
 fun Route.billRouting() {
@@ -87,7 +89,7 @@ fun Route.getBills() {
 
                 billsQuery.map {
                     BillResponse(
-                        it[Bills.id].toString().toInt(),
+                        it[Bills.id].value,
                         it[Bills.name],
                         it[Bills.description],
                         it[Bills.voteClosed],
@@ -110,7 +112,7 @@ fun Route.getBills() {
 
 fun Route.getBillById() {
     get {
-        val id = call.parameters["id"]?.toInt() ?: 0
+        val id = UUID.fromString(call.parameters["id"] ?: "")
 
         try {
             val billEntity = transaction {
@@ -173,7 +175,7 @@ fun Route.updateBill() {
                     .single()
                     .let {
                         BillResponse(
-                            it[Bills.id].toString().toInt(),
+                            it[Bills.id].value,
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
@@ -209,7 +211,7 @@ fun Route.closeBillVote() {
                     .single()
                     .let {
                         BillResponse(
-                            it[Bills.id].toString().toInt(),
+                            it[Bills.id].value,
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
@@ -260,7 +262,7 @@ fun Route.closeBillVote() {
 fun Route.deleteBill() {
     delete {
         try {
-            val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+            val id = UUID.fromString(call.parameters["id"]) ?: throw NotFoundException()
             transaction {
                 val billEntity = BillEntity.findById(id) ?: throw NotFoundException()
                 if (billEntity.voteClosed) {
@@ -297,7 +299,7 @@ fun Route.resetBill() {
                     .single()
                     .let {
                         BillResponse(
-                            it[Bills.id].toString().toInt(),
+                            it[Bills.id].value,
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
@@ -321,7 +323,7 @@ fun Route.resetBill() {
                         Votes.voteDetailId eq null
                     }
                     .map {
-                        it[VoteDetails.id].toString().toInt()
+                        it[VoteDetails.id]
                     }
             }
 
@@ -337,7 +339,7 @@ fun Route.resetBill() {
                     Votes.billId eq bill.id
                 }
                     .map {
-                        it[Votes.id].toString().toInt()
+                        it[Votes.id]
                     }
             }
 
@@ -361,19 +363,23 @@ data class CreateBillRequest(
     val name: String,
     val description: String,
     val voteClosed: Boolean,
-    val groupId: Int
+    @Serializable(UUIDSerializer::class)
+    val groupId: UUID
 )
 
 @Serializable
 data class UpdateBillRequest(
-    val id: Int,
+    @Serializable(UUIDSerializer::class)
+    val id: UUID,
     val name: String? = null,
     val description: String? = null,
     val voteClosed: Boolean? = null,
-    val groupId: Int? = null
+    @Serializable(UUIDSerializer::class)
+    val groupId: UUID? = null
 )
 
 @Serializable
 data class CloseBillVoteRequest(
-    val id: Int
+    @Serializable(UUIDSerializer::class)
+    val id: UUID
 )

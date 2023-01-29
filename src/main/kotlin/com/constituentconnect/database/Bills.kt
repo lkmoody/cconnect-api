@@ -3,12 +3,16 @@ package com.constituentconnect.database
 import com.constituentconnect.models.Bill
 import org.jetbrains.exposed.dao.IntEntity
 import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.UUIDEntity
+import org.jetbrains.exposed.dao.UUIDEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.dao.id.UUIDTable
 import org.jetbrains.exposed.sql.javatime.timestamp
+import java.util.UUID
 
-class BillEntity(id: EntityID<Int>) : IntEntity(id) {
-    companion object : IntEntityClass<BillEntity>(Bills)
+class BillEntity(id: EntityID<UUID>) : UUIDEntity(id) {
+    companion object : UUIDEntityClass<BillEntity>(Bills)
 
     var name by Bills.name
     var description by Bills.description
@@ -19,11 +23,11 @@ class BillEntity(id: EntityID<Int>) : IntEntity(id) {
 }
 
 
-object Bills : IntIdTable("core.bills") {
+object Bills : UUIDTable("core.bills") {
     val name = text("name")
     val description = text("description")
     val voteClosed = bool("voteClosed")
-    val groupId = integer("groupId")
+    val groupId = uuid("groupId")
     val created = timestamp("created")
     val updated = timestamp("updated")
 }

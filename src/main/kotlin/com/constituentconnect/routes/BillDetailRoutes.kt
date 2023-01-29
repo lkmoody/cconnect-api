@@ -9,6 +9,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
 import javax.naming.ServiceUnavailableException
 
 fun Route.billDetailRouting() {
@@ -19,7 +20,7 @@ fun Route.billDetailRouting() {
 
 private fun Route.getBillDetail() {
     get {
-        val id = call.parameters["id"]?.toInt() ?: throw NotFoundException()
+        val id = UUID.fromString(call.parameters["id"]) ?: throw NotFoundException()
 
         try {
             val billDetail = transaction {
@@ -38,7 +39,7 @@ private fun Route.getBillDetail() {
                     .single()
                     .let {
                         BillDetailResponse(
-                            it[Bills.id].toString().toInt(),
+                            it[Bills.id].value,
                             it[Bills.name],
                             it[Bills.description],
                             it[Bills.voteClosed],
