@@ -52,7 +52,7 @@ private fun Route.getBillDetail() {
 
             call.respond(HttpStatusCode.OK, billDetail)
         } catch (e: NotFoundException) {
-            call.respond(HttpStatusCode.NotFound, "Unable to find the bill detail ")
+            call.respond(HttpStatusCode.NotFound, "Unable to find the bill detail")
         } catch (e: Exception) {
             call.respond(HttpStatusCode.InternalServerError, "There was a problem getting the bill detail for id $id")
             println(e.message)
