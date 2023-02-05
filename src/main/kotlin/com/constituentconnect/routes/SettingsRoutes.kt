@@ -1,6 +1,8 @@
 package com.constituentconnect.routes
 
 import com.constituentconnect.database.*
+import com.constituentconnect.models.InstantSerializer
+import com.constituentconnect.models.UUIDSerializer
 import com.constituentconnect.models.User
 import com.constituentconnect.plugins.*
 import io.ktor.client.*
@@ -12,10 +14,12 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import org.apache.commons.codec.binary.Base64
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -121,7 +125,11 @@ fun Route.twitterAccessRequest() {
                 twitterApiUrl
             )
 
-            call.respond(HttpStatusCode.OK, authUrl)
+            val response = TwitterAuthUrlResponse(
+                authUrl = authUrl.toString()
+            )
+
+            call.respond(HttpStatusCode.OK, response)
         } catch (e: Exception) {
             call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
             println(e.message)
@@ -245,3 +253,8 @@ suspend fun buildTwitterAuthUrl(
 
     return ""
 }
+
+@Serializable
+data class TwitterAuthUrlResponse (
+    val authUrl: String
+)
