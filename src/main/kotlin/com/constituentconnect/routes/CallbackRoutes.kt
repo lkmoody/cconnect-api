@@ -81,7 +81,9 @@ fun Route.twitterCallbackAuth() {
                         }
                     }
 
-                    call.respond(HttpStatusCode.OK, HttpStatusCode.OK.toString())
+                    val response = CallbackAuthResponse(status = "Success")
+
+                    call.respond(HttpStatusCode.OK, response)
                 } else {
                     call.respond(HttpStatusCode.InternalServerError, clientErrorMessage)
                     println(response.status)
@@ -102,4 +104,9 @@ fun Route.twitterCallbackAuth() {
 data class CallbackAuthRequest(
     val oauthToken: String,
     val oauthVerifier: String
+)
+
+@Serializable
+data class CallbackAuthResponse(
+    val status: String
 )
