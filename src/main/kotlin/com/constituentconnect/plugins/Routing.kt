@@ -14,21 +14,12 @@ fun Application.configureRouting() {
         route("/api/v1") {
             // Health check end point
             get("/health") {
-                call.respond(HttpStatusCode.OK)
+                call.respond(HttpStatusCode.OK, "The server is healthy.")
             }
-
-            //callbackRouting()
 
             // Authenticated Routes
             authenticate {
-                userRouting()
-                groupRoutes()
-                billRouting()
-                billDetailRouting()
-                voteRouting()
-                voteDetailRouting()
-                settingsRouting()
-                callbackRouting()
+                testRouting()
             }
         }
     }

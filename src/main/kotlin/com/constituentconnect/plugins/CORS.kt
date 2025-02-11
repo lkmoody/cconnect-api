@@ -23,6 +23,6 @@ fun Application.configureCORS() {
         allowHost(host, scheme)
 
         //For debug
-        allowHost("localhost:3000", listOf("http"))
+        allowHost("localhost:3003", listOf("http"))
     }
 }

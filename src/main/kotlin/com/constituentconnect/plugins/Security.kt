@@ -1,13 +1,6 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
-import com.constituentconnect.database.UserGroupEntity
-import com.constituentconnect.database.UserGroups
-import com.constituentconnect.database.UserSettingEntity
-import com.constituentconnect.database.UserSettings.userID
-import com.constituentconnect.database.Users
-import com.constituentconnect.models.User
-import com.constituentconnect.models.UserSettings
 import io.ktor.client.*
 import io.ktor.http.cio.*
 import io.ktor.server.application.*
@@ -16,14 +9,8 @@ import io.ktor.server.auth.jwt.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.lang.Error
 import java.lang.Exception
-import java.net.URI
 import java.util.concurrent.TimeUnit
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-
 fun Application.configureSecurity() {
     install(Authentication) {
         jwt {
@@ -39,6 +26,7 @@ fun Application.configureSecurity() {
             }
 
             validate { credential ->
+                println(credential.payload.getClaim("aud"))
                 if (credential.payload.getClaim("aud").asString() in audiences && credential.payload.getClaim("token_use").asString() == "id") {
                     JWTPrincipal(credential.payload)
                 } else {
@@ -49,72 +37,23 @@ fun Application.configureSecurity() {
     }
 }
 
-fun ApplicationCall.getCurrentUser(): User? {
-    val username = getCurrentUsername()
-    val user = transaction {
-        Users.select {
-            Users.authId eq username
-        }
-            .limit(1)
-            .singleOrNull()
-            ?.let {
-                User(
-                    it[Users.id].value,
-                    it[Users.authId],
-                    it[Users.firstName],
-                    it[Users.lastName],
-                    it[Users.displayName],
-                    it[Users.phone],
-                    it[Users.email],
-                    null,
-                    null,
-                    it[Users.created],
-                    it[Users.updated]
-                )
-            }
-    }
-
-    if(user != null) {
-        var userSettings = transaction {
-            UserSettingEntity.find { userID eq user.id }.firstOrNull()
-        }
-
-        if(userSettings == null) {
-            userSettings = transaction {
-                UserSettingEntity.new {
-                    userID = user.id
-                }
-            }
-        }
-
-        user.settings = userSettings.let {
-            UserSettings(
-                it.voteTextNotificationEnabled,
-                it.twitterVotePostEnabled
-            )
-        }
-
-        var userGroupId = transaction {
-            UserGroupEntity.find {
-                (UserGroups.userId eq user.id)
-            }.firstOrNull().let {
-                it?.groupId ?: null
-            }
-        }
-
-        user.groupId = userGroupId
-    }
-
-    return user
-}
-
 fun ApplicationCall.getCurrentUsername(): String {
     val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
-    return principal.payload.claims["sub"]?.asString() ?: throw AuthenticationException()
+    return principal.payload.claims?.get("sub")?.asString() ?: throw AuthenticationException()
+}
+
+fun ApplicationCall.getCurrentUserRoles(): List<String>? {
+    val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
+    return principal.payload.claims?.get("cognito:groups")?.asArray(String::class.java)?.toList() ?: throw AuthenticationException()
 }
 
 fun ApplicationCall.getCurrentUserEmail(): String {
     val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
-    return principal.payload.claims["email"]?.asString() ?: throw AuthenticationException()
+    return principal.payload.claims?.get("email")?.asString() ?: throw AuthenticationException()
 }
+
+fun Application.getUserStuff() {
+
+}
+
 class AuthenticationException: Exception()
