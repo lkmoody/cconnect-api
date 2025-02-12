@@ -1,1 +1,1 @@
-rootProject.name = "cconnect-api"
+rootProject.name = "constituent-connect-api"
