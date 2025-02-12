@@ -14,7 +14,7 @@ fun Application.configureRouting() {
         route("/api/v1") {
             // Health check end point
             get("/health") {
-                call.respond(HttpStatusCode.OK, "The server is healthy.")
+                call.respond(HttpStatusCode.OK, "The server is still healthy.")
             }
 
             // Authenticated Routes
