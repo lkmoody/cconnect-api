@@ -5,15 +5,14 @@ import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.testRouting() {
-    route("/test") {
-        testRoute()
+fun Route.userRouting() {
+    route("/current-user") {
+        getCurrentUser()
     }
 }
 
-fun Route.testRoute() {
+fun Route.getCurrentUser() {
     get {
-        println("In here")
-        call.respond(HttpStatusCode.OK, "Leroy")
+        call.respond(HttpStatusCode.OK, "Current user")
     }
 }

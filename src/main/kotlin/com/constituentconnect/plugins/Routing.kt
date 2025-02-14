@@ -19,7 +19,7 @@ fun Application.configureRouting() {
 
             // Authenticated Routes
             authenticate {
-                testRouting()
+                userRouting()
             }
         }
     }
