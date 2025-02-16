@@ -13,6 +13,6 @@ fun Route.userRouting() {
 
 fun Route.getCurrentUser() {
     get {
-        call.respond(HttpStatusCode.OK, "Current user")
+        call.respond(HttpStatusCode.OK, "Current user!")
     }
 }
