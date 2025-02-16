@@ -21,8 +21,5 @@ fun Application.configureCORS() {
         val scheme = listOf(clientURI.scheme)
 
         allowHost(host, scheme)
-
-        //For debug
-        allowHost(clientDomain, listOf("http"))
     }
 }
