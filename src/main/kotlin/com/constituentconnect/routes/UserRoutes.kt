@@ -1,5 +1,6 @@
 package com.constituentconnect.routes
 
+import com.constituentconnect.plugins.getCurrentUser
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -13,6 +14,7 @@ fun Route.userRouting() {
 
 fun Route.getCurrentUser() {
     get {
-        call.respond(HttpStatusCode.OK, "Current user!")
+        val user = call.getCurrentUser()
+        call.respondNullable(HttpStatusCode.OK, user)
     }
 }

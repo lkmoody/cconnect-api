@@ -1,6 +1,8 @@
 package com.constituentconnect.plugins
 
 import com.auth0.jwk.JwkProviderBuilder
+import com.constituentconnect.database.Users
+import com.constituentconnect.models.User
 import io.ktor.client.*
 import io.ktor.http.cio.*
 import io.ktor.server.application.*
@@ -11,6 +13,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.lang.Exception
 import java.util.concurrent.TimeUnit
+
 fun Application.configureSecurity() {
     install(Authentication) {
         jwt {
@@ -27,13 +30,40 @@ fun Application.configureSecurity() {
 
             validate { credential ->
                 println(credential.payload.getClaim("aud"))
-                if (credential.payload.getClaim("aud").asString() in audiences && credential.payload.getClaim("token_use").asString() == "id") {
+                if (credential.payload.getClaim("aud")
+                        .asString() in audiences && credential.payload.getClaim("token_use").asString() == "id"
+                ) {
                     JWTPrincipal(credential.payload)
                 } else {
                     null
                 }
             }
         }
+    }
+}
+
+fun ApplicationCall.getCurrentUser(): User? {
+    val username = getCurrentUsername()
+
+    return transaction {
+        Users.select {
+            Users.authId eq username
+        }
+            .limit(1)
+            .singleOrNull()
+            ?.let {
+                User(
+                    it[Users.id].value,
+                    it[Users.authId],
+                    it[Users.firstName],
+                    it[Users.lastName],
+                    it[Users.displayName],
+                    it[Users.phone],
+                    it[Users.email],
+                    it[Users.created],
+                    it[Users.updated]
+                )
+            }
     }
 }
 
@@ -44,7 +74,8 @@ fun ApplicationCall.getCurrentUsername(): String {
 
 fun ApplicationCall.getCurrentUserRoles(): List<String>? {
     val principal = principal<JWTPrincipal>() ?: throw AuthenticationException()
-    return principal.payload.claims?.get("cognito:groups")?.asArray(String::class.java)?.toList() ?: throw AuthenticationException()
+    return principal.payload.claims?.get("cognito:groups")?.asArray(String::class.java)?.toList()
+        ?: throw AuthenticationException()
 }
 
 fun ApplicationCall.getCurrentUserEmail(): String {
@@ -56,4 +87,4 @@ fun Application.getUserStuff() {
 
 }
 
-class AuthenticationException: Exception()
+class AuthenticationException : Exception()
