@@ -15,7 +15,7 @@ fun Application.module() {
         environment.config.property("database.user").getString(),
         environment.config.property("database.password").getString()
     ).schemas("core").load()
-    flyway.baseline()
+    //flyway.baseline()
     flyway.migrate()
 
     configureSecurity()
